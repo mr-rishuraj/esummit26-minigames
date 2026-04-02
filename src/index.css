@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  min-width: 0;          /* prevents flex children from overflowing */
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background-color: #0f0f23;
+  color: #f8f8f2;
+  font-family: 'Press Start 2P', monospace;
+  /* Smooth momentum scroll on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Canvas — always scale to container width ───────────────────────────── */
+canvas {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ── Horizontal scroll strips (leaderboard, skin selector) ─────────────── */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #3d3d5c #0f0f23;
+}
+.scroll-x::-webkit-scrollbar       { height: 4px; }
+.scroll-x::-webkit-scrollbar-track { background: #0f0f23; }
+.scroll-x::-webkit-scrollbar-thumb { background: #3d3d5c; }
+
+/* Vertical scrollbar */
+::-webkit-scrollbar        { width: 5px; }
+::-webkit-scrollbar-track  { background: #0f0f23; }
+::-webkit-scrollbar-thumb  { background: #3d3d5c; }
+::-webkit-scrollbar-thumb:hover { background: #50fa7b; }
+
+/* ── Pixel utilities ────────────────────────────────────────────────────── */
+@layer components {
+  .pixel-btn {
+    @apply font-pixel border-4 shadow-pixel transition-all
+           active:translate-x-1 active:translate-y-1 active:shadow-none
+           select-none cursor-pointer;
+  }
+  .pixel-panel {
+    @apply bg-arcade-panel border-4 border-arcade-green shadow-pixel-green;
+  }
+}
+
+/* ── Selection ──────────────────────────────────────────────────────────── */
+::selection {
+  background: #50fa7b44;
+  color: #f1fa8c;
+}
