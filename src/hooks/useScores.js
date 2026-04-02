@@ -28,9 +28,10 @@ export function useScores(user, gameName) {
     setError(null)
     try {
       await insertScore({
-        user_id:   user.id,
-        email:     user.email,
-        game_name: gameName,
+        user_id:     user.id,
+        email:       user.email,
+        player_name: user.user_metadata?.full_name || 'Player',
+        game_name:   gameName,
         score,
       })
       fetchScores() // refresh history after saving

@@ -3,10 +3,10 @@ import { supabase } from './client'
 /**
  * Insert a new score row for every game attempt (never overwrite).
  */
-export async function insertScore({ user_id, email, game_name, score }) {
+export async function insertScore({ user_id, email, player_name, game_name, score }) {
   const { data, error } = await supabase
     .from('scores')
-    .insert([{ user_id, email, game_name, score }])
+    .insert([{ user_id, email, player_name, game_name, score }])
     .select()
     .single()
 
@@ -35,8 +35,8 @@ export async function getUserScores(user_id, game_name, limit = 10) {
  */
 export async function getLeaderboard(game_name, limit = 10) {
   const { data, error } = await supabase
-    .from('scores')
-    .select('email, score, created_at')
+    .from('leaderboard')
+    .select('player_name, score, created_at')
     .eq('game_name', game_name)
     .order('score', { ascending: false })
     .limit(limit)

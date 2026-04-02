@@ -66,7 +66,7 @@ export default function App() {
       />
 
       <main className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-4 md:px-6 py-5 sm:py-8">
-        <Leaderboard />
+        <Leaderboard currentGame={currentGame} />
         {renderGame(currentGame, gameProps)}
       </main>
 

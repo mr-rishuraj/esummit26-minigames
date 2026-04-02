@@ -1,10 +1,5 @@
-const DUMMY_SCORES = [
-  { rank: 1, name: 'SPEEDMASTER', score: 2847, game: 'DINO RUN' },
-  { rank: 2, name: 'FLAPPYKING',  score: 1923, game: 'FLAPPY'   },
-  { rank: 3, name: 'PIXELPRO99',  score: 1456, game: 'DINO RUN' },
-  { rank: 4, name: 'TAPMASTER',   score:  987, game: 'FLAPPY'   },
-  { rank: 5, name: 'ARCADEFAN',   score:  543, game: 'DINO RUN' },
-]
+import { useState, useEffect } from 'react'
+import { getLeaderboard } from '../services/supabase/scores'
 
 const RANK_META = {
   1: { color: '#f1fa8c', glow: '#f1fa8c55', label: 'GOLD'   },
@@ -12,7 +7,27 @@ const RANK_META = {
   3: { color: '#ffb86c', glow: '#ffb86c44', label: 'BRONZE' },
 }
 
-export default function Leaderboard() {
+export default function Leaderboard({ currentGame }) {
+  const [topScores, setTopScores] = useState([])
+
+  useEffect(() => {
+    async function fetchLeaderboard() {
+      if (!currentGame) return
+      try {
+        const data = await getLeaderboard(currentGame, 5)
+        setTopScores(data)
+      } catch (err) {
+        console.error('[Leaderboard] fetch error', err)
+      }
+    }
+
+    fetchLeaderboard()
+    
+    // Poll every 5 seconds to keep it live
+    const intervalId = setInterval(fetchLeaderboard, 5000)
+    return () => clearInterval(intervalId)
+  }, [currentGame])
+
   return (
     <section className="mb-5 sm:mb-8">
       {/* Title row */}
@@ -31,51 +46,59 @@ export default function Leaderboard() {
       <div className="scroll-x pb-2">
         <div className="flex gap-2 sm:gap-3"
              style={{ minWidth: 'max-content' }}>
-          {DUMMY_SCORES.map(entry => {
-            const meta  = RANK_META[entry.rank]
-            const isTop = !!meta
+          {topScores.length === 0 ? (
+             <div className="font-pixel text-arcade-gray text-xs py-4 px-2">
+               No scores yet... Be the first!
+             </div>
+          ) : (
+            topScores.map((entry, index) => {
+              const rank  = index + 1
+              const meta  = RANK_META[rank]
+              const isTop = !!meta
 
-            return (
-              <div
-                key={entry.rank}
-                className="flex flex-col items-center gap-1.5 px-2 sm:px-3 py-2 sm:py-3
-                           border-2 bg-arcade-panel flex-shrink-0"
-                style={{
-                  width:       'clamp(72px, 18vw, 110px)',
-                  borderColor: isTop ? meta.color : '#6272a4',
-                  boxShadow:   isTop ? `0 0 10px ${meta.glow}` : 'none',
-                }}
-              >
-                {/* Rank label */}
-                <span
-                  className="font-pixel text-[7px] sm:text-[9px] whitespace-nowrap"
-                  style={{ color: isTop ? meta.color : '#6272a4' }}
+              return (
+                <div
+                  key={`${entry.player_name}-${rank}`}
+                  className="flex flex-col items-center gap-1.5 px-2 sm:px-3 py-2 sm:py-3
+                             border-2 bg-arcade-panel flex-shrink-0"
+                  style={{
+                    width:       'clamp(90px, 22vw, 130px)',
+                    borderColor: isTop ? meta.color : '#6272a4',
+                    boxShadow:   isTop ? `0 0 10px ${meta.glow}` : 'none',
+                  }}
                 >
-                  {isTop ? meta.label : `#${entry.rank}`}
-                </span>
+                  {/* Rank label */}
+                  <span
+                    className="font-pixel text-[7px] sm:text-[9px] whitespace-nowrap"
+                    style={{ color: isTop ? meta.color : '#6272a4' }}
+                  >
+                    {isTop ? meta.label : `#${rank}`}
+                  </span>
 
-                {/* Name — truncated */}
-                <span className="font-pixel text-[7px] sm:text-[8px] text-white text-center
-                                 leading-snug w-full truncate px-1">
-                  {entry.name}
-                </span>
+                  {/* Name — truncated */}
+                  <span className="font-pixel text-[8px] sm:text-[9px] text-white text-center
+                                   leading-snug w-full px-1 overflow-hidden"
+                        style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                    {entry.player_name || 'Player'}
+                  </span>
 
-                {/* Score */}
-                <span
-                  className="font-pixel text-sm sm:text-xl leading-none"
-                  style={{ color: isTop ? meta.color : '#f8f8f2' }}
-                >
-                  {entry.score.toLocaleString()}
-                </span>
+                  {/* Score */}
+                  <span
+                    className="font-pixel text-sm sm:text-lg lg:text-xl leading-none mt-auto"
+                    style={{ color: isTop ? meta.color : '#f8f8f2' }}
+                  >
+                    {entry.score.toLocaleString()}
+                  </span>
 
-                {/* Game tag */}
-                <span className="font-pixel text-[6px] sm:text-[7px] text-arcade-gray
-                                 text-center whitespace-nowrap">
-                  {entry.game}
-                </span>
-              </div>
-            )
-          })}
+                  {/* Game tag */}
+                  <span className="font-pixel text-[6px] sm:text-[7px] text-arcade-gray
+                                   text-center whitespace-nowrap">
+                    {currentGame.toUpperCase()}
+                  </span>
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
     </section>

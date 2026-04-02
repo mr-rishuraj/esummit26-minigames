@@ -10,23 +10,30 @@ CREATE TABLE IF NOT EXISTS public.scores (
   email      TEXT        NOT NULL,
   game_name  TEXT        NOT NULL,  -- e.g. "dinosaur"
   score      INTEGER     NOT NULL,
+  player_name TEXT       DEFAULT 'Player',
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
+
+-- Safely add the player_name column if the table already existed from a previous run
+ALTER TABLE public.scores ADD COLUMN IF NOT EXISTS player_name TEXT DEFAULT 'Player';
 
 -- 2. Row-Level Security
 ALTER TABLE public.scores ENABLE ROW LEVEL SECURITY;
 
 -- Users can insert their OWN scores only
+DROP POLICY IF EXISTS "insert_own_scores" ON public.scores;
 CREATE POLICY "insert_own_scores"
   ON public.scores
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- Users can read their OWN scores only
-CREATE POLICY "select_own_scores"
+-- Users can read ALL scores (needed for leaderboard)
+DROP POLICY IF EXISTS "select_own_scores" ON public.scores;
+DROP POLICY IF EXISTS "select_all_scores" ON public.scores;
+CREATE POLICY "select_all_scores"
   ON public.scores
   FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (auth.role() = 'authenticated');
 
 -- 3. Indexes for query performance
 CREATE INDEX IF NOT EXISTS idx_scores_user_game
@@ -39,10 +46,12 @@ CREATE INDEX IF NOT EXISTS idx_scores_leaderboard
 --  LEADERBOARD HELPER VIEW (optional, for future use)
 --  Shows the single best score per user per game
 -- ============================================================
-CREATE OR REPLACE VIEW public.leaderboard AS
+DROP VIEW IF EXISTS public.leaderboard;
+CREATE VIEW public.leaderboard AS
   SELECT DISTINCT ON (game_name, user_id)
     user_id,
     email,
+    player_name,
     game_name,
     score,
     created_at
